@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "奥特曼 · 招式乐园",
+  "short_name": "奥特曼乐园",
+  "description": "和奥特曼一起变身、练招的儿童动画小游戏",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#102749",
+  "theme_color": "#102749",
+  "icons": [
+    { "src": "./assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

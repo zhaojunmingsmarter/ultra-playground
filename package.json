@@ -1,1 +1,11 @@
-{"name":"ultra-playground","version":"1.0.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.js","check":"node --check game.js && node --check renderer.js && node --check audio.js && node --check engine.js"}}
+{
+  "name": "ultra-playground",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check game.js && node --check renderer.js && node --check audio.js && node --check engine.js && node --check pwa.js && node --check sw.js",
+    "build": "node scripts/build.mjs"
+  }
+}

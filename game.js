@@ -35,10 +35,12 @@ function saveSettings() {
 }
 function message(text, spoken = true) {
   $('#speech').textContent = text;
+  $('#speech').hidden = !engine.action;
   if (spoken) audio.speak(text);
 }
 function clearActionUI() {
   lastPhase = ''; lastCount = 0;
+  $('#speech').hidden = true;
   $('#countdown').hidden = true;
   $('#move-progress').style.width = '0%';
   document.querySelectorAll('[data-move]').forEach(button => button.classList.remove('active'));
@@ -165,7 +167,7 @@ function showResume() {
   $('#game').inert = true;
   $('#welcome').hidden = false;
   $('#start strong').textContent = '继续玩';
-  $('#loading').textContent = '准备好了，点一下继续';
+  $('#loading').textContent = '';
   $('#start').disabled = !ready;
 }
 document.addEventListener('visibilitychange', () => {
@@ -254,7 +256,7 @@ async function preload() {
   document.querySelectorAll('.squad canvas').forEach((el,i)=>drawPortrait(el,HEROES[[2,0,1,3][i]],cache.get('ultra-atlas-v2.png'),true));
   $('#start').disabled = false;
   $('#start strong').textContent = '开始玩';
-  $('#loading').textContent = '轻轻一点，音乐和冒险一起开始';
+  $('#loading').textContent = '';
   renderer.draw(performance.now(),engine,{phase:'idle',progress:0},cache);
 }
 $('#retry').addEventListener('click',preload);
