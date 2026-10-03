@@ -13,3 +13,9 @@ const version=hash.digest('hex').slice(0,16);
 const worker=template.replace('__BUILD_VERSION__',version).replace('__PRECACHE_FILES__',JSON.stringify(publishFiles));
 await writeFile('_site/sw.js',worker);
 console.log(`Offline cache version: ${version}`);
+
+// A fresh scope lets devices stuck on an older worker open the repaired game directly.
+for(const file of [...publishFiles,'sw.js']) {
+  await mkdir('_site/play/'+file.split('/').slice(0,-1).join('/'),{recursive:true});
+  await copyFile('_site/'+file,'_site/play/'+file);
+}
