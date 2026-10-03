@@ -8,14 +8,19 @@ const indexURL = new URL('index.html', self.registration.scope).href;
 
 self.addEventListener('install', event => {
   // Atomic install: no offline-ready claim if even one required resource fails.
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(urls)));
-  // Do not skipWaiting: let an ongoing child's game finish on its current version.
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(urls)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key.startsWith(PREFIX) && key !== CACHE).map(key => caches.delete(key)));
+    const previous = keys.filter(key => key.startsWith(PREFIX) && key !== CACHE);
+    await Promise.all(previous.map(key => caches.delete(key)));
     await self.clients.claim();
+    // Refresh old documents too: their scripts do not listen for controllerchange.
+    if (previous.length) {
+      const windows = await self.clients.matchAll({ type:'window', includeUncontrolled:true });
+      await Promise.allSettled(windows.filter(client => client.url.startsWith(self.registration.scope)).map(client => client.navigate(client.url)));
+    }
   })());
 });
 self.addEventListener('fetch', event => {
