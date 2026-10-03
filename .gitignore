@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+artifacts/
+_site/
+assets/heroes/
+assets/sources.json
+assets/sprites/ultra-atlas.png
+scripts/fetch-assets.py

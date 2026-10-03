@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102749">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="选一个奥特曼，和光之英雄一起变身、练招！适合亲子游玩的触控小游戏。">
+  <title>奥特曼 · 招式乐园</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23102749'/%3E%3Cpath d='M36 5 14 36h16l-3 23 24-34H35z' fill='%23ffcf59'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main id="game" class="game" inert>
+  <header><div class="brand"><span class="brand-mark">✦</span><h1>奥特曼 <span>招式乐园</span></h1></div><button id="parents" class="parent-entry" aria-label="家长设置，长按两秒或按住回车键两秒">⚙ <span>家长</span><i></i></button></header>
+  <section class="arena" aria-label="奥特曼招式舞台">
+    <canvas id="stage" role="img" aria-label="迪迦在光之舞台上准备出招"></canvas>
+    <div class="stage-tag"><span>✦</span> 光之训练场</div>
+    <p id="speech" class="speech" role="status" aria-live="polite">选个招式，一起做！</p>
+    <div id="countdown" class="countdown" hidden></div>
+    <div class="hero-title"><span id="hero-subtitle">光之巨人</span><strong id="hero-name">迪迦</strong><span id="phase">准备好啦</span></div>
+    <button id="monster" class="monster-button" aria-pressed="false"><span class="monster-icon">🦖</span><strong>叫怪兽</strong></button>
+    <div id="move-progress" class="move-progress"></div>
+  </section>
+  <section class="controls" aria-label="选择奥特曼和招式">
+    <div class="hero-selection"><h2>和谁一起玩？</h2><div id="heroes" class="heroes"></div></div>
+    <div class="move-selection"><h2>点一下，出招！</h2><div class="moves"><button data-move="entrance" class="move entrance"><span>✦</span><strong>变身登场</strong></button><button data-move="fight" class="move fight"><span>✊</span><strong id="fight-label">飞踢</strong></button><button data-move="special" class="move special"><span>ϟ</span><strong id="special-label">发射光线</strong></button></div></div>
+  </section>
+  <footer><span>每一次，都是小英雄</span><span id="follow-hint" hidden>🙌 跟我做已开启</span><span class="sound-note">♫ <span id="music-status">音乐开</span></span></footer>
+</main>
+<section id="welcome" class="welcome" aria-labelledby="welcome-title">
+  <div class="welcome-stars">✦ <span>✧</span> ✦</div>
+  <p class="eyebrow">小英雄，欢迎来到</p><h2 id="welcome-title">奥特曼<span>招式乐园</span></h2>
+  <div class="squad" aria-hidden="true"><canvas></canvas><canvas></canvas><canvas></canvas><canvas></canvas></div>
+  <button id="start" class="start-button" disabled><span>▶</span> <strong>准备中…</strong></button><p id="loading" role="status">奥特曼正在集合</p><button id="retry" hidden>重新加载</button>
+  <p class="welcome-note">点一下出招 · 和奥特曼一起做动作</p>
+</section>
+<dialog id="settings" aria-labelledby="settings-title">
+  <h2 id="settings-title">家长设置</h2><p>调整好声音，让小英雄自在地玩。</p>
+  <label class="setting">背景音乐 <input id="music-toggle" type="checkbox" checked></label>
+  <label class="setting">招式音效与中文播报 <input id="effects-toggle" type="checkbox" checked></label>
+  <label class="setting volume">音量 <input id="volume" type="range" min="0" max="100" value="45"><output id="volume-value">45%</output></label>
+  <label class="setting">跟我做：出招前倒数三秒 <input id="follow-toggle" type="checkbox"></label>
+  <p class="settings-tip">离开页面或锁屏后会暂停。iPad 可通过 Safari 分享菜单“添加到主屏幕”打开。</p>
+  <button id="close-settings" class="dialog-done">回去玩</button>
+</dialog>
+<noscript>请开启浏览器 JavaScript 后再玩。</noscript>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
