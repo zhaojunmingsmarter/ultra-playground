@@ -1,3 +1,4 @@
+import {MONSTERS,drawMonsterPortrait} from './world.js';
 import { HEROES, ASSETS, assetPath } from './heroes.js';
 import { createImageLoader } from './image-loader.js';
 import { GameEngine } from './engine.js';
@@ -16,7 +17,7 @@ let frame = 0, ready = false, lastPhase = '', lastCount = 0, loadingGeneration =
 function message(text, spoken = true) {
   $('#speech').textContent = text;
   $('#speech').hidden = !engine.action;
-  if (spoken) audio.speak(text);
+
 }
 function clearActionUI() {
   lastPhase = ''; lastCount = 0;
@@ -40,7 +41,7 @@ function selectHero(index) {
   $('#stage').setAttribute('aria-label', `${hero.name}在光之舞台上准备出招`);
   $('#stage').dataset.hero = hero.id;
   message(`${hero.name}，和你一起玩！`);
-  audio.effect('hello');
+  audio.voice(hero.id,true);
 }
 HEROES.forEach((hero,index) => {
   const button = document.createElement('button');
@@ -80,22 +81,36 @@ document.querySelectorAll('[data-move]').forEach(button => {
     else { message('准备，一起做！'); $('#phase').textContent = '跟我做'; }
   });
 });
+function updateMonsterButton(){
+  const monster=MONSTERS[engine.monsterKind];
+  $('#monster').setAttribute('aria-label',`${monster.name}，点击换怪兽`);
+  $('#monster strong').textContent=monster.name;
+  drawMonsterPortrait($('#monster canvas'),engine.monsterKind,cache.get('kaiju-atlas.webp'),cache.get('monster.webp'));
+  $('#stage').dataset.monster=String(engine.monsterKind);
+}
 $('#monster').addEventListener('click', () => {
-  if (!engine.active) return;
-  engine.monster = !engine.monster;
-  $('#monster').setAttribute('aria-pressed', String(engine.monster));
-  $('#monster strong').textContent = '怪兽';
-  audio.effect('monster');
-  message(engine.monster ? '小怪兽，一起来练招！' : '小怪兽，下次见！');
+  if(!engine.active)return;
+  engine.monsterKind=(engine.monsterKind+1)%MONSTERS.length;
+  engine.monsterChanged=performance.now();
+  updateMonsterButton();audio.monster(engine.monsterKind);
+  loadImage(engine.monsterKind?'kaiju-atlas.webp':'monster.webp').then(updateMonsterButton).catch(()=>{});
 });
+$('#stage').addEventListener('pointerdown',event=>{
+  if(!engine.active)return;
+  const rect=event.currentTarget.getBoundingClientRect();
+  renderer.world.interact((event.clientX-rect.left)/rect.width,(event.clientY-rect.top)/rect.height,performance.now());
+  audio.effect('tap');
+});
+audio.onVoice=hero=>{$('#stage').dataset.voice=hero;};
 
 document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
   engine.scene=Number(button.dataset.scene);
+  $('#stage').dataset.scene=String(engine.scene);
   loadImage(['city.webp','space.webp','canyon.webp'][engine.scene]).catch(()=>{});
   document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
   audio.effect('tap');
 }));
-let lastImpactKey='';
+let lastImpactKey='',lastMonsterCue='';
 function draw(now) {
   const state = engine.tick(now);
   if (state.justStarted) beginAction();
@@ -104,18 +119,15 @@ function draw(now) {
     $('#countdown').textContent = state.count;
     if (lastCount !== state.count) {
       lastCount = state.count;
-      // Let the short instruction finish before the last two spoken beats.
-      if (state.count < 3) audio.speak(state.count === 2 ? '二' : '一');
       audio.effect('tap');
     }
   } else $('#countdown').hidden = true;
   if (state.phase !== lastPhase) {
     lastPhase = state.phase;
-    if (state.phase === 'prepare') { $('#phase').textContent = '准备！'; audio.effect('charge'); }
+    if (state.phase === 'prepare') { $('#phase').textContent = '准备！'; audio.move(engine.action,HEROES[engine.hero].id,'prepare'); }
     if (state.phase === 'release') {
       $('#phase').textContent = '出招！';
-      if(engine.action === 'special' || engine.action === 'ultimate') audio.effect('beam');
-      else if(engine.action === 'entrance' || engine.action === 'shield') audio.effect('hello');
+      audio.move(engine.action,HEROES[engine.hero].id,'release');
     }
     if (state.phase === 'recover') $('#phase').textContent = '好帅的招式！';
   }
@@ -128,8 +140,9 @@ function draw(now) {
   $('#move-progress').style.width = `${state.progress * 100}%`;
   $('#stage').dataset.phase = state.phase;
   renderer.draw(now, engine, state, cache);
+  if(renderer.monsterCue && renderer.monsterCue!==lastMonsterCue){lastMonsterCue=renderer.monsterCue;audio.monster(engine.monsterKind);}
   const impactKey=`${engine.started}:${renderer.hitIndex}`;
-  if(renderer.hitIndex>=0 && impactKey!==lastImpactKey){lastImpactKey=impactKey;audio.effect('hit');}
+  if(renderer.hitIndex>=0 && impactKey!==lastImpactKey){lastImpactKey=impactKey;audio.impact(engine.action,renderer.hitIndex);}
   if (engine.active) frame = requestAnimationFrame(draw);
 }
 async function startGame() {
@@ -180,6 +193,7 @@ async function preload() {
   }
   if(generation !== loadingGeneration) return;
   ready = true;
+  audio.preloadVoices();
   document.querySelectorAll('.portrait canvas').forEach((el,i)=>drawPortrait(el,HEROES[i],cache.get('ultra-atlas-v2.webp')));
   document.querySelectorAll('.squad canvas').forEach((el,i)=>drawPortrait(el,HEROES[[2,0,1,3][i]],cache.get('ultra-atlas-v2.webp'),true));
   $('#start').disabled = false;
@@ -194,11 +208,14 @@ async function loadExtras() {
   async function worker() {
     while(remaining.length) {
       const name = remaining.shift();
-      try { await loadImage(name); } catch { /* Retry on the next online event or selection. */ }
+      try { await loadImage(name); if(name==='kaiju-atlas.webp'||name==='monster.webp')updateMonsterButton();
+        const sceneIndex=['city.webp','space.webp','canyon.webp'].indexOf(name);
+        if(sceneIndex>=0){const button=document.querySelector(`[data-scene="${sceneIndex}"]`);button.style.backgroundImage=`url(${assetPath(name)})`;button.classList.add('scene-loaded');} } catch { /* Retry on the next online event or selection. */ }
     }
   }
   await Promise.all([worker(), worker()]);
 }
 window.addEventListener('online', () => { if(!ready) preload(); else loadExtras(); });
+updateMonsterButton();
 $('#retry').addEventListener('click',preload);
 preload();

@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {mkdir,copyFile,rm,readFile,writeFile} from 'node:fs/promises';
 // Explicit publish list keeps research photos, local tests, and source history off the website.
-export const publishFiles=['image-loader.js','pwa.js','manifest.webmanifest','assets/icons/icon-192.png','assets/icons/icon-512.png','assets/icons/icon-maskable-512.png','assets/icons/apple-touch-icon.png','index.html','style.css','game.js','heroes.js','renderer.js','audio.js','engine.js','assets/sprites/ultra-atlas-v2.webp','assets/sprites/city.webp','assets/sprites/monster.webp','assets/sprites/combat.webp','assets/sprites/space.webp','assets/sprites/canyon.webp'];
+export const publishFiles=['world.js','voices.js','assets/audio/tiga.mp3','assets/audio/zero.mp3','assets/audio/taro.mp3','assets/audio/original.mp3','assets/sprites/kaiju-atlas.webp','assets/sprites/world-props.webp','image-loader.js','pwa.js','manifest.webmanifest','assets/icons/icon-192.png','assets/icons/icon-512.png','assets/icons/icon-maskable-512.png','assets/icons/apple-touch-icon.png','index.html','style.css','game.js','heroes.js','renderer.js','audio.js','engine.js','assets/sprites/ultra-atlas-v2.webp','assets/sprites/city.webp','assets/sprites/monster.webp','assets/sprites/combat.webp','assets/sprites/space.webp','assets/sprites/canyon.webp'];
 await rm('_site',{recursive:true,force:true});
 for(const file of publishFiles){await mkdir('_site/'+file.split('/').slice(0,-1).join('/'),{recursive:true});await copyFile(file,'_site/'+file);}
 console.log(`Published ${publishFiles.length} files to _site`);

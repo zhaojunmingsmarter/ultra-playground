@@ -1,3 +1,4 @@
+import {LivingWorld,drawKaiju,MONSTERS} from './world.js';
 const clamp = (v,min=0,max=1) => Math.max(min,Math.min(max,v));
 const ease = t => t*t*(3-2*t);
 function ellipse(c,x,y,rx,ry,color){c.fillStyle=color;c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fill();}
@@ -15,7 +16,7 @@ export function drawPortrait(canvas,hero,atlas,full=false){
 export class StageRenderer {
   constructor(canvas,heroes){
     this.canvas=canvas;this.c=canvas.getContext('2d');this.heroes=heroes;
-    this.w=1000;this.h=450;this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.world=new LivingWorld();this.w=1000;this.h=450;this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(canvas);this.resize();
   }
   resize(){const r=this.canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);this.w=r.width;this.h=r.height;this.canvas.width=Math.round(r.width*d);this.canvas.height=Math.round(r.height*d);this.c.setTransform(d,0,0,d,0,0);}
@@ -106,8 +107,9 @@ export class StageRenderer {
   draw(now,engine,state,cache){
     const c=this.c,w=this.w,h=this.h,hero=this.heroes[engine.hero],atlas=cache.get('ultra-atlas-v2.webp'),combat=cache.get('combat.webp');
     const move=engine.action,p=state.progress||0,scene=engine.scene||0;
-    this.background(cache.get(['city.webp','space.webp','canyon.webp'][scene]));this.environment(now,scene);
-    this.hitIndex=-1;if(!atlas)return;
+    this.background(cache.get(['city.webp','space.webp','canyon.webp'][scene]));
+    this.world.draw(c,w,h,now,scene,cache.get('world-props.webp'),move==='ultimate'?Math.sin(p*Math.PI):0,this.reduced);this.environment(now,scene);
+    this.hitIndex=-1;this.monsterCue=null;if(!atlas)return;
     const timings={punch:[.30,.43,.57],fight:[.43],uppercut:[.40],spin:[.32,.48,.64],special:[.40,.51,.62],ultimate:[.47,.55,.63,.71,.79]};
     const hits=timings[move]||[];
     let impact=0,hit=-1,age=1;
@@ -136,7 +138,25 @@ export class StageRenderer {
       for(let i=0;i<5;i++)this.ring(x,ground-bh*((p+i/5)%1),bh*.42,hero.color,Math.sin(p*Math.PI),Math.PI/2);
     }
     ellipse(c,x,ground,bh*.3,bh*.05,'#0b1d4b55');
-    if(engine.monster){let lift=move==='uppercut'&&p>.4?Math.sin(clamp((p-.4)/.5)*Math.PI)*bh*.25:0;this.monster(cache.get('monster.webp'),w*.81+impact*w*.025,ground-lift,bh*.70,impact,now);}
+    if(engine.monster){
+      const kind=engine.monsterKind||0,arrival=clamp((now-engine.monsterChanged)/650),mx=w*.81+impact*w*.025;
+      const cycle=(now/1000+kind*1.7)%9,attacking=!move&&cycle>6.3&&cycle<8.2;
+      const lift=move==='uppercut'&&p>.4?Math.sin(clamp((p-.4)/.5)*Math.PI)*bh*.25:0;
+      const wobble=!move&&!this.reduced?Math.sin(now/1000+kind)*w*.012:0;
+      ellipse(c,mx+wobble,ground,bh*.21,bh*.033,'#12264e44');
+      if(kind&&cache.get('kaiju-atlas.webp'))drawKaiju(c,cache.get('kaiju-atlas.webp'),kind,mx+wobble,ground-lift,bh*.76,impact,now,arrival,attacking,this.reduced);
+      else this.monster(cache.get('monster.webp'),mx+wobble,ground-lift,bh*.70,impact,now);
+      if(arrival<1)this.ring(mx,ground-bh*.37,bh*.48,MONSTERS[kind].color,1-arrival);
+      if(attacking){
+        this.monsterCue=`${kind}:${Math.floor((now/1000+kind*1.7)/9)}`;
+        const shot=clamp((cycle-6.3)/1.9),xx=mx-(mx-baseX-bh*.24)*shot,yy=ground-bh*.43-Math.sin(shot*Math.PI)*bh*.15;
+        this.aura(xx,yy,bh*.13,MONSTERS[kind].color,.8);
+        if(kind===3){c.save();c.strokeStyle='#fff1a2';c.lineWidth=3;c.beginPath();for(let i=0;i<7;i++){const x=xx+i*5-15,y=yy+Math.sin(i*2+now/80)*10;i?c.lineTo(x,y):c.moveTo(x,y);}c.stroke();c.restore();}
+        else this.ring(xx,yy,bh*.075,MONSTERS[kind].color,.85,now/300);
+        if(shot>.75)this.burst(baseX+bh*.24,ground-bh*.43,bh*.22,'#b4f1ff',(shot-.75)/.25);
+      }
+      if(impact>.12){star(c,mx-bh*.13,ground-bh*.84,7,'#ffe49e',now/700);star(c,mx+bh*.14,ground-bh*.79,5,'#fff9d2',now/600);}
+    }
     const active=move&&p>.15&&p<.88;
     if(attack&&active&&!this.reduced){for(let i=5;i>0;i--){if(col>=0&&combat)this.combat(combat,engine.hero,col,x-i*bh*.08,feet+i*3,bh,.045*(6-i));else this.sprite(atlas,hero,pose,x-i*bh*.08,feet+i*3,bh,.045*(6-i));}}
     let rect;

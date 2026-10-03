@@ -24,3 +24,26 @@ test('switching actions stops every existing effect',()=>{
  const a=new GameAudio();let stopped=0;a.fxNodes.add({stop(){stopped++;}});a.fxNodes.add({stop(){stopped++;}});
  a.stopEffects();assert.equal(stopped,2);assert.equal(a.fxNodes.size,0);
 });
+
+test('each hero plays its own decoded buffer, and selection stops the previous voice',async()=>{
+ const a=new GameAudio(),started=[];let stopped=0;
+ const param={setValueAtTime(){},linearRampToValueAtTime(){}};
+ a.ctx={currentTime:0,createGain:()=>({gain:param,connect(){return this;},disconnect(){}}),createBufferSource:()=>({connect(){return this;},disconnect(){},start(){started.push(this.buffer.hero);},stop(){stopped++;}})};
+ a.fx={};a.running=true;
+ for(const hero of ['tiga','zero','taro','original'])a.voiceBuffers.set(hero,{hero,duration:.9});
+ for(const hero of ['tiga','zero','taro','original'])assert.equal(await a.voice(hero),true);
+ assert.deepEqual(started,['tiga','zero','taro','original']);assert.equal(stopped,3);
+ a.stopEffects();assert.equal(stopped,4);assert.equal(a.voiceNodes.size,0);
+});
+test('late audio downloads never speak after cancellation or backgrounding',async()=>{
+ const a=new GameAudio();a.running=true;let finish;
+ a.loadVoice=()=>new Promise(resolve=>finish=resolve);
+ const pending=a.voice('tiga');a.stopVoice();a.running=false;finish({duration:1});
+ assert.equal(await pending,false);
+});
+test('every move has distinct release sound scheduling without system speech',()=>{
+ const a=new GameAudio();a.running=true;a.ctx={currentTime:0};const signatures=[];
+ let events=[];a.note=(...args)=>events.push(['note',...args]);a.noise=(...args)=>events.push(['noise',...args]);a.voice=(...args)=>events.push(['voice',...args]);
+ for(const move of ['entrance','punch','fight','uppercut','spin','shield','special','ultimate']){events=[];a.move(move,'tiga','release');assert.ok(events.some(x=>x[0]==='voice'));assert.ok(events.some(x=>x[0]==='note'||x[0]==='noise'));signatures.push(JSON.stringify(events));}
+ assert.ok(new Set(signatures).size>=7);
+});

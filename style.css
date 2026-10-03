@@ -16,3 +16,18 @@ html,body{touch-action:pan-x pan-y;overscroll-behavior:none;-webkit-text-size-ad
 /* The play area starts at the top, with no title bar or settings entry. */
 .arena{height:calc(100dvh - 223px)}
 @media(orientation:portrait){.arena{height:calc(100dvh - 333px)}}
+
+/* Illustrated selectors and the compact monster switch stay out of the action. */
+.monster-button{width:100px;height:100px;padding:3px 4px 7px;background:#112d50b3;border:1px solid #d2edff88;box-shadow:0 4px 12px #07193344;overflow:hidden}
+.monster-button canvas{width:84px;height:66px;object-fit:contain}.monster-button strong{font-size:13px;letter-spacing:1px}.cycle-icon{position:absolute;right:5px;top:3px;font-size:20px;color:#ffe5a3}
+.scenes button{color:#fff;background-size:cover;background-position:center;border:2px solid #ffffff66;box-shadow:0 3px 8px #0a153755}
+.scenes button.scene-loaded{color:transparent!important}
+.scenes button[aria-pressed=true]{border-color:#ffe6a2;box-shadow:0 0 0 2px #153351,0 0 15px #ffdb7b55}
+.hero{background:linear-gradient(155deg,#fff,#eaf0f8)}.hero[aria-pressed=true]{background:linear-gradient(135deg,#d6f4ff,#bfe3f8)}
+.move{border:1px solid #fff7;background-image:linear-gradient(145deg,#ffffff44,#ffffff00 65%)}.speech{font-size:16px;padding:10px 18px;box-shadow:0 3px 12px #07193233}.hero-title strong{letter-spacing:2px}
+@media(max-width:600px){.monster-button{width:80px;height:88px}.monster-button canvas{width:66px;height:54px}.monster-button strong{font-size:12px}}
+
+.monster-button{top:14px;bottom:auto;width:88px;height:88px}.monster-button canvas{width:72px;height:56px}.speech{right:116px;top:20px}.scenes button{background-position:center 65%}
+@media(orientation:portrait){.speech{right:18px;top:110px}}
+.ultimate{background-color:#d4b5f4}
+.scenes button[aria-pressed=true]{background-size:cover;background-position:center 65%}

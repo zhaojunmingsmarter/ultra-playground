@@ -18,3 +18,8 @@
 
 ## Supplemental arcade artwork
 Generated with OpenAI image generation using the existing hero atlas as reference: combat.png, four rows (Tiga, Zero, Taro, Original), four poses (punch, rising uppercut, crouched guard, roundhouse kick), transparent child-friendly classic suits. space.png: side-view silver orbital arena with blue planet, nebula and rings. canyon.png: side-view sunset sandstone arena, distant river and waterfalls. Both backgrounds have a clear flat foreground and no UI or characters. Effects are rendered procedurally in Canvas.
+
+## Living world update
+- kaiju-atlas.webp: generated 3x3 transparent atlas. Gomora, Alien Baltan, Eleking in rows; idle, playful attack and seated surprised reaction in columns; all face left. Child-friendly cel animation matching the heroes.
+- world-props.webp: generated 3x2 transparent atlas: rescue jet, UFO, pterosaur, spotted deer, rabbit, rescue boat. Final edit removed backdrop and halos; transparency retained during WebP encoding.
+- Motion, clouds, flocking birds, auroras, water wakes, falling leaves, waterfall spray, monster projectiles and scene lighting are drawn and animated by world.js/renderer.js. All generated source art is retained locally; only compressed WebP is shipped.
