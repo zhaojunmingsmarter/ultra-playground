@@ -19,7 +19,8 @@ self.addEventListener('activate', event => {
     // Refresh old documents too: their scripts do not listen for controllerchange.
     if (previous.length) {
       const windows = await self.clients.matchAll({ type:'window', includeUncontrolled:true });
-      await Promise.allSettled(windows.filter(client => client.url.startsWith(self.registration.scope)).map(client => client.navigate(client.url)));
+      // Navigation fetches need activation to finish: never await navigation here.
+      void Promise.allSettled(windows.filter(client => client.url.startsWith(self.registration.scope)).map(client => client.navigate(client.url)));
     }
   })());
 });

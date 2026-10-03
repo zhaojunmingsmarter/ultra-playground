@@ -5,11 +5,11 @@ import {readFile} from 'node:fs/promises';
 const scope='https://example.test/ultra-playground/';
 const files=['index.html','game.js','pwa.js','assets/sprites/city.png'];
 const source=(await readFile('sw.js','utf8')).replace('__BUILD_VERSION__','test-v2').replace('__PRECACHE_FILES__',JSON.stringify(files));
-function worker(fail=false){
+function worker(fail=false, waitForNavigation=false){
  const listeners={},stores=new Map(),deleted=[],navigated=[];let claimed=0,skipped=0;
  const cacheFor=name=>{if(!stores.has(name))stores.set(name,new Map());const map=stores.get(name);return {async addAll(urls){if(fail)throw new Error('network failed');for(const url of urls)map.set(url,'cached:'+url);},async match(url){return map.get(url);}};}; 
  const caches={open:async name=>cacheFor(name),keys:async()=>[...stores.keys()],delete:async key=>{deleted.push(key);return stores.delete(key);}};
- vm.runInNewContext(source,{URL,caches,fetch:async()=>{throw new Error('offline');},self:{registration:{scope},skipWaiting:async()=>skipped++,clients:{claim:async()=>claimed++,matchAll:async()=>[scope,'https://example.test/other/'].map(url=>({url,navigate:async target=>navigated.push(target)}))},addEventListener:(name,fn)=>listeners[name]=fn}});
+ vm.runInNewContext(source,{URL,caches,fetch:async()=>{throw new Error('offline');},self:{registration:{scope},skipWaiting:async()=>skipped++,clients:{claim:async()=>claimed++,matchAll:async()=>[scope,'https://example.test/other/'].map(url=>({url,navigate:async target=>{navigated.push(target);if(waitForNavigation)await new Promise(()=>{});}}))},addEventListener:(name,fn)=>listeners[name]=fn}});
  return {listeners,stores,deleted,navigated,get skipped(){return skipped;},get claimed(){return claimed;},async event(name){let done;listeners[name]({waitUntil:p=>done=p});await done;},async fetch(path,mode='cors',method='GET'){let response;listeners.fetch({request:{url:new URL(path,scope).href,mode,method},respondWith:p=>response=p});return response;}};
 }
 test('offline navigation including home-screen launch resolves to cached index and assets',async()=>{
@@ -38,4 +38,13 @@ test('complete updates activate immediately and refresh only this game',async()=
  const w=worker();w.stores.set('ultra-playground:/ultra-playground/:old',new Map());
  await w.event('install');assert.equal(w.skipped,1);await w.event('activate');assert.deepEqual(w.navigated,[scope]);
  const fresh=worker();await fresh.event('install');await fresh.event('activate');assert.deepEqual(fresh.navigated,[]);
+});
+
+test('activation finishes without waiting for navigation requests that depend on activation',async()=>{
+ const w=worker(false,true);w.stores.set('ultra-playground:/ultra-playground/:old',new Map());
+ await w.event('install');
+ let timer;
+ try { await Promise.race([w.event('activate'),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('activation deadlock')),100);})]); }
+ finally { clearTimeout(timer); }
+ assert.deepEqual(w.navigated,[scope]);
 });
