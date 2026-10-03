@@ -1,4 +1,5 @@
 import { HEROES, ASSETS, assetPath } from './heroes.js';
+import { createImageLoader } from './image-loader.js';
 import { GameEngine } from './engine.js';
 import { GameAudio } from './audio.js';
 import { StageRenderer, drawPortrait } from './renderer.js';
@@ -10,6 +11,7 @@ const settings = { music:true, effects:true, volume:.45, follow:false };
 engine.follow = settings.follow;
 const renderer = new StageRenderer($('#stage'), HEROES);
 const cache = new Map();
+const loadImage = createImageLoader(cache, assetPath);
 let frame = 0, ready = false, lastPhase = '', lastCount = 0, loadingGeneration = 0;
 function message(text, spoken = true) {
   $('#speech').textContent = text;
@@ -89,6 +91,7 @@ $('#monster').addEventListener('click', () => {
 
 document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
   engine.scene=Number(button.dataset.scene);
+  loadImage(['city.webp','space.webp','canyon.webp'][engine.scene]).catch(()=>{});
   document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
   audio.effect('tap');
 }));
@@ -164,39 +167,38 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', () => { if(engine.active) showResume(); });
 
-function loadImage(name) {
-  if(cache.has(name)) return Promise.resolve();
-  return new Promise((resolve,reject) => {
-    const img = new Image();
-    const timer = setTimeout(() => { img.onload = img.onerror = null; reject(new Error(name)); }, 20000);
-    img.onload = () => { clearTimeout(timer); cache.set(name,img); resolve(); };
-    img.onerror = () => { clearTimeout(timer); reject(new Error(name)); };
-    img.src = assetPath(name);
-  });
-}
 async function preload() {
   const generation = ++loadingGeneration;
   ready = false; $('#start').disabled = true; $('#retry').hidden = true;
-  const files = ASSETS;
-  let completed = 0;
-  const results = await Promise.allSettled(files.map(async name => {
-    await loadImage(name);
-    completed++;
-    if(generation === loadingGeneration) $('#loading').textContent = `奥特曼正在集合 ${completed} / ${files.length}`;
-  }));
-  if(generation !== loadingGeneration) return;
-  if(results.some(r => r.status === 'rejected')) {
-    $('#loading').textContent = '有图片还没到，再试一次吧';
+  $('#loading').textContent = '加载中…';
+  try { await loadImage('ultra-atlas-v2.webp'); }
+  catch {
+    if(generation !== loadingGeneration) return;
+    $('#loading').textContent = '暂时没连上网络';
     $('#retry').hidden = false;
     return;
   }
+  if(generation !== loadingGeneration) return;
   ready = true;
-  document.querySelectorAll('.portrait canvas').forEach((el,i)=>drawPortrait(el,HEROES[i],cache.get('ultra-atlas-v2.png')));
-  document.querySelectorAll('.squad canvas').forEach((el,i)=>drawPortrait(el,HEROES[[2,0,1,3][i]],cache.get('ultra-atlas-v2.png'),true));
+  document.querySelectorAll('.portrait canvas').forEach((el,i)=>drawPortrait(el,HEROES[i],cache.get('ultra-atlas-v2.webp')));
+  document.querySelectorAll('.squad canvas').forEach((el,i)=>drawPortrait(el,HEROES[[2,0,1,3][i]],cache.get('ultra-atlas-v2.webp'),true));
   $('#start').disabled = false;
   $('#start strong').textContent = '开始玩';
   $('#loading').textContent = '';
   renderer.draw(performance.now(),engine,{phase:'idle',progress:0},cache);
+  loadExtras();
 }
+async function loadExtras() {
+  // Limit background concurrency so the foreground hero has network priority.
+  const remaining = ASSETS.filter(name => name !== 'ultra-atlas-v2.webp');
+  async function worker() {
+    while(remaining.length) {
+      const name = remaining.shift();
+      try { await loadImage(name); } catch { /* Retry on the next online event or selection. */ }
+    }
+  }
+  await Promise.all([worker(), worker()]);
+}
+window.addEventListener('online', () => { if(!ready) preload(); else loadExtras(); });
 $('#retry').addEventListener('click',preload);
 preload();

@@ -104,9 +104,9 @@ export class StageRenderer {
     for(let i=0;i<3;i++){c.strokeStyle=i===2?'#fffbe6':color;c.lineWidth=(17-i*6);c.beginPath();c.ellipse(0,0,r,r*.45,0,-2.3,.85);c.stroke();}c.restore();
   }
   draw(now,engine,state,cache){
-    const c=this.c,w=this.w,h=this.h,hero=this.heroes[engine.hero],atlas=cache.get('ultra-atlas-v2.png'),combat=cache.get('combat.png');
+    const c=this.c,w=this.w,h=this.h,hero=this.heroes[engine.hero],atlas=cache.get('ultra-atlas-v2.webp'),combat=cache.get('combat.webp');
     const move=engine.action,p=state.progress||0,scene=engine.scene||0;
-    this.background(cache.get(['city.png','space.png','canyon.png'][scene]));this.environment(now,scene);
+    this.background(cache.get(['city.webp','space.webp','canyon.webp'][scene]));this.environment(now,scene);
     this.hitIndex=-1;if(!atlas)return;
     const timings={punch:[.30,.43,.57],fight:[.43],uppercut:[.40],spin:[.32,.48,.64],special:[.40,.51,.62],ultimate:[.47,.55,.63,.71,.79]};
     const hits=timings[move]||[];
@@ -136,7 +136,7 @@ export class StageRenderer {
       for(let i=0;i<5;i++)this.ring(x,ground-bh*((p+i/5)%1),bh*.42,hero.color,Math.sin(p*Math.PI),Math.PI/2);
     }
     ellipse(c,x,ground,bh*.3,bh*.05,'#0b1d4b55');
-    if(engine.monster){let lift=move==='uppercut'&&p>.4?Math.sin(clamp((p-.4)/.5)*Math.PI)*bh*.25:0;this.monster(cache.get('monster.png'),w*.81+impact*w*.025,ground-lift,bh*.70,impact,now);}
+    if(engine.monster){let lift=move==='uppercut'&&p>.4?Math.sin(clamp((p-.4)/.5)*Math.PI)*bh*.25:0;this.monster(cache.get('monster.webp'),w*.81+impact*w*.025,ground-lift,bh*.70,impact,now);}
     const active=move&&p>.15&&p<.88;
     if(attack&&active&&!this.reduced){for(let i=5;i>0;i--){if(col>=0&&combat)this.combat(combat,engine.hero,col,x-i*bh*.08,feet+i*3,bh,.045*(6-i));else this.sprite(atlas,hero,pose,x-i*bh*.08,feet+i*3,bh,.045*(6-i));}}
     let rect;

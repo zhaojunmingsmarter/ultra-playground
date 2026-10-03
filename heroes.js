@@ -1,4 +1,4 @@
-export const ASSETS = ['ultra-atlas-v2.png','city.png','monster.png','combat.png','space.png','canyon.png'];
+export const ASSETS = ['ultra-atlas-v2.webp','city.webp','monster.webp','combat.webp','space.webp','canyon.webp'];
 export const assetPath = name => `./assets/sprites/${name}`;
 // Rectangles isolate the real generated poses within the shared atlas (1254 square).
 export const HEROES = [
