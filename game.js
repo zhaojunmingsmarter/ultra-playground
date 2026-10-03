@@ -1,38 +1,16 @@
 import { HEROES, ASSETS, assetPath } from './heroes.js';
 import { GameEngine } from './engine.js';
 import { GameAudio } from './audio.js';
-import { HoldGate } from './hold-gate.js';
 import { StageRenderer, drawPortrait } from './renderer.js';
 
 const $ = selector => document.querySelector(selector);
 const engine = new GameEngine();
 const audio = new GameAudio();
-const settings = readSettings();
+const settings = { music:true, effects:true, volume:.45, follow:false };
 engine.follow = settings.follow;
 const renderer = new StageRenderer($('#stage'), HEROES);
 const cache = new Map();
 let frame = 0, ready = false, lastPhase = '', lastCount = 0, loadingGeneration = 0;
-const holdGate = new HoldGate(openSettings);
-
-function readSettings() {
-  const defaults = { music:true, effects:true, volume:.45, follow:false };
-  try {
-    const saved = JSON.parse(localStorage.getItem('ultra-settings-v1') || '{}');
-    return {
-      music:typeof saved.music === 'boolean' ? saved.music : defaults.music,
-      effects:typeof saved.effects === 'boolean' ? saved.effects : defaults.effects,
-      follow:typeof saved.follow === 'boolean' ? saved.follow : defaults.follow,
-      volume:Number.isFinite(saved.volume) ? Math.min(1, Math.max(0, saved.volume)) : defaults.volume
-    };
-  } catch { return defaults; }
-}
-function saveSettings() {
-  try { localStorage.setItem('ultra-settings-v1', JSON.stringify(settings)); } catch { /* Private browsing remains playable. */ }
-  audio.apply(settings);
-  engine.follow = settings.follow;
-  $('#music-status').textContent = settings.music ? '音乐开' : '音乐关';
-  $('#follow-hint').hidden = !settings.follow;
-}
 function message(text, spoken = true) {
   $('#speech').textContent = text;
   $('#speech').hidden = !engine.action;
@@ -180,59 +158,11 @@ function showResume() {
   $('#start').disabled = !ready;
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) cancelHold();
   if (document.hidden && engine.active) {
-    if ($('#settings').open) $('#settings').close();
     showResume();
   }
 });
 window.addEventListener('pagehide', () => { if(engine.active) showResume(); });
-
-function cancelHold() {
-  holdGate.cancel();
-  $('#parents').classList.remove('holding');
-}
-function openSettings() {
-  cancelHold(); pauseGame();
-  $('#settings').showModal();
-}
-function beginHold() {
-  if(holdGate.timer !== null || !engine.active) return;
-  $('#parents').classList.add('holding');
-  holdGate.start();
-}
-$('#parents').addEventListener('pointerdown', event => {
-  if(!event.isPrimary) return;
-  event.preventDefault();
-  beginHold(event.pointerId);
-});
-for(const name of ['pointerup','pointercancel','pointerleave']) $('#parents').addEventListener(name, cancelHold);
-$('#parents').addEventListener('contextmenu', event => event.preventDefault());
-$('#parents').addEventListener('keydown', event => {
-  if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if(!event.repeat) beginHold(); }
-});
-$('#parents').addEventListener('keyup', cancelHold);
-$('#parents').addEventListener('blur', cancelHold);
-$('#music-toggle').checked = settings.music;
-$('#effects-toggle').checked = settings.effects;
-$('#follow-toggle').checked = settings.follow;
-$('#volume').value = Math.round(settings.volume*100);
-$('#volume-value').textContent = `${Math.round(settings.volume*100)}%`;
-for(const [id,key] of [['music-toggle','music'],['effects-toggle','effects'],['follow-toggle','follow']]) {
-  $(`#${id}`).addEventListener('change', event => { settings[key] = event.target.checked; saveSettings(); });
-}
-$('#volume').addEventListener('input', event => {
-  settings.volume = Number(event.target.value)/100;
-  $('#volume-value').textContent = `${event.target.value}%`;
-  saveSettings();
-});
-async function closeSettings() {
-  $('#settings').close();
-  await startGame();
-}
-$('#close-settings').addEventListener('click', closeSettings);
-$('#settings').addEventListener('cancel', event => {event.preventDefault();closeSettings();});
-saveSettings();
 
 function loadImage(name) {
   if(cache.has(name)) return Promise.resolve();

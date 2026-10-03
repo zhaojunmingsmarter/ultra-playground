@@ -16,7 +16,6 @@
 </head>
 <body>
 <main id="game" class="game" inert>
-  <header><div class="brand"><span class="brand-mark">✦</span><h1>奥特曼 <span>招式乐园</span></h1></div><button id="parents" class="parent-entry" aria-label="家长设置，长按两秒或按住回车键两秒">⚙ <span>家长</span><i></i></button></header>
   <section class="arena" aria-label="奥特曼招式舞台">
     <canvas id="stage" role="img" aria-label="迪迦在光之舞台上准备出招"></canvas>
     <p id="speech" class="speech" role="status" aria-live="polite" hidden></p>
@@ -39,24 +38,12 @@
 <button data-move="ultimate" class="move ultimate"><span>🌟</span><strong>超级必杀</strong></button>
 </div></div>
   </section>
-  <footer hidden><span>每一次，都是小英雄</span><span id="follow-hint" hidden>🙌 跟我做已开启</span><span class="sound-note">♫ <span id="music-status">音乐开</span></span></footer>
 </main>
-<section id="welcome" class="welcome" aria-labelledby="welcome-title">
+<section id="welcome" class="welcome" aria-label="开始游戏">
   <div class="welcome-stars">✦ <span>✧</span> ✦</div>
-  <h2 id="welcome-title">奥特曼<span>招式乐园</span></h2>
   <div class="squad" aria-hidden="true"><canvas></canvas><canvas></canvas><canvas></canvas><canvas></canvas></div>
   <button id="start" class="start-button" disabled><span>▶</span> <strong>准备中…</strong></button><p id="loading" role="status">奥特曼正在集合</p><button id="retry" hidden>重新加载</button>
 </section>
-<dialog id="settings" aria-labelledby="settings-title">
-  <h2 id="settings-title">家长设置</h2>
-  <label class="setting">背景音乐 <input id="music-toggle" type="checkbox" checked></label>
-  <label class="setting">招式音效与中文播报 <input id="effects-toggle" type="checkbox" checked></label>
-  <label class="setting volume">音量 <input id="volume" type="range" min="0" max="100" value="45"><output id="volume-value">45%</output></label>
-  <label class="setting">跟我做：出招前倒数三秒 <input id="follow-toggle" type="checkbox"></label>
-  <p class="settings-tip">离开页面或锁屏后会暂停。iPad 可通过 Safari 分享菜单“添加到主屏幕”打开。</p>
-  <p class="settings-tip" id="offline-status" role="status">正在准备离线内容…</p>
-  <button id="close-settings" class="dialog-done">回去玩</button>
-</dialog>
 <noscript>请开启浏览器 JavaScript 后再玩。</noscript>
 <script type="module" src="./pwa.js"></script>
 <script type="module" src="./game.js"></script>
