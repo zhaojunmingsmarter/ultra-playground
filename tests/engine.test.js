@@ -27,3 +27,20 @@ test('backgrounding cancels all pending actions and requires deliberate resume',
  assert.equal(e.tick(10000).phase,'paused');assert.equal(e.request('fight',11000),'ignored');
  e.active=true;assert.equal(e.tick(12000).phase,'idle');
 });
+
+test('four landed actions defeat a monster, then a fresh opponent arrives automatically',()=>{
+ const e=new GameEngine();e.active=true;e.tick(0);
+ for(let i=0;i<4;i++){
+   const at=100+i*2500;e.request('punch',at);e.tick(at+650);
+   assert.equal(e.hp,3-i);e.tick(at+1100);assert.equal(e.hp,3-i);
+   if(i<3)e.tick(at+2200);
+ }
+ assert.notEqual(e.deadAt,null);assert.equal(e.attackAt,null);
+ const kind=e.monsterKind;e.tick(10150);assert.equal(e.monsterKind,(kind+1)%4);assert.equal(e.hp,4);assert.equal(e.deadAt,null);
+});
+test('monster attacks during hero moves and battle time stops while backgrounded',()=>{
+ const e=new GameEngine();e.active=true;e.tick(0);e.request('shield',3000);e.tick(3500);
+ assert.notEqual(e.attackAt,null);assert.equal(e.hp,4);
+ const clock=e.battleTime;e.pause();e.tick(30000);e.active=true;e.tick(40000);assert.equal(e.battleTime,clock);
+ e.tick(41900);assert.equal(e.attackAt,null);
+});

@@ -90,8 +90,7 @@ function updateMonsterButton(){
 }
 $('#monster').addEventListener('click', () => {
   if(!engine.active)return;
-  engine.monsterKind=(engine.monsterKind+1)%MONSTERS.length;
-  engine.monsterChanged=performance.now();
+  engine.nextMonster(performance.now());
   updateMonsterButton();audio.monster(engine.monsterKind);
   loadImage(engine.monsterKind?'kaiju-atlas.webp':'monster.webp').then(updateMonsterButton).catch(()=>{});
 });
@@ -101,7 +100,7 @@ $('#stage').addEventListener('pointerdown',event=>{
   renderer.world.interact((event.clientX-rect.left)/rect.width,(event.clientY-rect.top)/rect.height,performance.now());
   audio.effect('tap');
 });
-audio.onVoice=hero=>{$('#stage').dataset.voice=hero;};
+audio.onVoice=(hero,variant)=>{$('#stage').dataset.voice=hero;$('#stage').dataset.voiceVariant=variant;};
 
 document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
   engine.scene=Number(button.dataset.scene);
@@ -112,7 +111,15 @@ document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListene
 }));
 let lastImpactKey='',lastMonsterCue='';
 function draw(now) {
+  const previousMonster=engine.monsterKind,previousHp=engine.hp;
   const state = engine.tick(now);
+  if(previousMonster!==engine.monsterKind)updateMonsterButton();
+  if(previousHp>0 && engine.hp===0)audio.defeat();
+  const health=$('#monster-health');
+  health.setAttribute('aria-valuenow',String(engine.hp));
+  health.dataset.hp=String(engine.hp);
+  health.querySelectorAll('i').forEach((part,i)=>part.classList.toggle('empty',i>=engine.hp));
+  $('#stage').dataset.monsterState=engine.deadAt!==null?'defeated':engine.attackAt!==null?'attacking':'ready';
   if (state.justStarted) beginAction();
   if (state.count) {
     $('#countdown').hidden = false;

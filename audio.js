@@ -2,7 +2,7 @@ import { VOICES } from './voices.js';
 const MELODY=[72,0,76,79,81,79,76,0,74,0,77,81,79,77,74,0,72,76,79,84,83,79,76,0,74,77,79,71,72,0,0,0];
 const midi=n=>440*2**((n-69)/12);
 export class GameAudio {
-  constructor(){this.ctx=null;this.timer=null;this.fxNodes=new Set();this.musicNodes=new Set();this.running=false;this.step=0;this.settings={music:true,effects:true,volume:.45};this.duckUntil=0;this.voiceToken=0;this.voiceNodes=new Set();this.voiceBuffers=new Map();this.voiceRequests=new Map();this.rawVoices=new Map();}
+  constructor(){this.voiceTurns=new Map();this.moveTurns=0;this.ctx=null;this.timer=null;this.fxNodes=new Set();this.musicNodes=new Set();this.running=false;this.step=0;this.settings={music:true,effects:true,volume:.45};this.duckUntil=0;this.voiceToken=0;this.voiceNodes=new Set();this.voiceBuffers=new Map();this.voiceRequests=new Map();this.rawVoices=new Map();}
   async start(settings){
     this.settings=settings;
     try{if(!this.ctx){this.ctx=new (window.AudioContext||window.webkitAudioContext)();this.master=this.ctx.createGain();this.music=this.ctx.createGain();this.fx=this.ctx.createGain();this.music.connect(this.master);this.fx.connect(this.master);this.limiter=this.ctx.createDynamicsCompressor();this.limiter.threshold.value=-12;this.limiter.knee.value=12;this.limiter.ratio.value=5;this.master.connect(this.limiter);this.limiter.connect(this.ctx.destination);}
@@ -49,17 +49,30 @@ export class GameAudio {
     })().finally(()=>this.voiceRequests.delete(hero));
     this.voiceRequests.set(hero,work);return work;
   }
-  async voice(hero,long=false){
+  async voice(hero,long=false,kind="selection"){
     if(!this.running||!this.settings.effects||!VOICES[hero])return false;
     this.stopVoice();const token=this.voiceToken;
     let buffer;try{buffer=await this.loadVoice(hero);}catch{return false;}
     if(!buffer||token!==this.voiceToken||!this.running||!this.settings.effects)return false;
-    const t=this.ctx.currentTime,duration=Math.min(buffer.duration,long?2.6:1.05);
-    const source=this.ctx.createBufferSource(),gain=this.ctx.createGain();source.buffer=buffer;
-    gain.gain.setValueAtTime(.0001,t);gain.gain.linearRampToValueAtTime(.8,t+.012);gain.gain.setValueAtTime(.8,t+Math.max(.02,duration-.10));gain.gain.linearRampToValueAtTime(.0001,t+duration);
-    source.connect(gain).connect(this.fx);this.voiceNodes.add(source);
-    source.onended=()=>{this.voiceNodes.delete(source);source.disconnect();gain.disconnect();};
-    source.start(t,0,duration);this.duckUntil=t+duration;this.onVoice?.(hero);return true;
+    const turn=this.voiceTurns.get(hero)||0;this.voiceTurns.set(hero,turn+1);
+    // Alternate short, double and sustained calls, with move-specific timing.
+    const variant=turn%3;
+    const profiles={punch:[.38,2,.25],fight:[.72,1,0],uppercut:[.58,1,0],spin:[.32,3,.23],shield:[.46,1,0],special:[1.25,1,0],ultimate:[1.9,1,0],entrance:[1.5,1,0],selection:[1.2,1,0]};
+    const [length,repeats,gap]=profiles[kind]||profiles.selection;
+    const rate=[1,.91,1.09][variant],duration=Math.min(buffer.duration,length*[1,.76,1.12][variant]);
+    const count=variant===1 && repeats===1 && !long?2:repeats;
+    const t=this.ctx.currentTime;
+    for(let i=0;i<count;i++){
+      const at=t+i*(gap||.29),offset=Math.min(Math.max(0,buffer.duration-duration),variant*.08);
+      const source=this.ctx.createBufferSource(),gain=this.ctx.createGain();source.buffer=buffer;
+      if(source.playbackRate)source.playbackRate.value=rate+i*.035;
+      const wall=duration/(rate+i*.035);
+      gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.8,at+.012);gain.gain.setValueAtTime(.8,at+Math.max(.02,wall-.08));gain.gain.linearRampToValueAtTime(.0001,at+wall);
+      source.connect(gain).connect(this.fx);this.voiceNodes.add(source);
+      source.onended=()=>{this.voiceNodes.delete(source);source.disconnect();gain.disconnect();};
+      source.start(at,offset,duration);this.duckUntil=at+wall;
+    }
+    this.onVoice?.(hero,`${kind}-${variant}`);return true;
   }
   stopVoice(){this.voiceToken++;for(const source of this.voiceNodes){try{source.stop();}catch{}}this.voiceNodes.clear();this.duckUntil=0;}
   noise(at,duration,volume,from=900,to=100,type='lowpass'){
@@ -71,13 +84,14 @@ export class GameAudio {
   }
   move(kind,hero,phase){
     if(!this.running||!this.settings.effects||!this.ctx)return;
-    const t=this.ctx.currentTime,tone={tiga:1,zero:1.18,taro:.86,original:.94}[hero]||1;
+    const t=this.ctx.currentTime,tone=({tiga:1,zero:1.18,taro:.86,original:.94}[hero]||1)*[1,.88,1.12][this.moveTurns%3];
     if(phase==='prepare'){
       if(['special','ultimate','entrance','shield'].includes(kind)){this.effect('charge');if(kind==='ultimate')this.note(75,t,1,.18,this.fx,'triangle',210);}
       else this.noise(t,.22,.18,500,2400,'bandpass');
       return;
     }
-    this.voice(hero,['entrance','special','ultimate'].includes(kind));
+    this.moveTurns++;
+    this.voice(hero,['entrance','special','ultimate'].includes(kind),kind);
     if(kind==='punch'){for(let i=0;i<3;i++)this.noise(t+i*.26,.16,.25,2200,400,'bandpass');}
     if(kind==='fight'||kind==='uppercut'){this.noise(t,.48,.28,500,3500,'bandpass');this.note((kind==='uppercut'?170:230)*tone,t,kind==='uppercut'?.45:.32,.13,this.fx,'triangle',(kind==='uppercut'?1200:780)*tone);}
     if(kind==='spin'){for(let i=0;i<3;i++){this.noise(t+i*.26,.34,.18,1100,3200,'bandpass');this.note(400*tone,t+i*.26,.23,.065,this.fx,'sine',1200);}}
@@ -95,6 +109,11 @@ export class GameAudio {
     const t=this.ctx.currentTime;
     this.effect('hit');this.noise(t,move==='ultimate'?.34:.15,.26,move==='spin'?2300:1300,140);
     if(index>0)this.note(680+index*130,t,.14,.07,this.fx,'sine');
+  }
+  defeat(){
+    if(!this.running||!this.settings.effects||!this.ctx)return;
+    const t=this.ctx.currentTime;this.noise(t,.65,.2,800,90);
+    [523,659,784,1047].forEach((f,i)=>this.note(f,t+.25+i*.14,.55,.12,this.fx,'sine'));
   }
   monster(kind=0){
     if(!this.running||!this.settings.effects||!this.ctx)return;

@@ -140,16 +140,23 @@ export class StageRenderer {
     ellipse(c,x,ground,bh*.3,bh*.05,'#0b1d4b55');
     if(engine.monster){
       const kind=engine.monsterKind||0,arrival=clamp((now-engine.monsterChanged)/650),mx=w*.81+impact*w*.025;
-      const cycle=(now/1000+kind*1.7)%9,attacking=!move&&cycle>6.3&&cycle<8.2;
+      const dying=engine.deadAt!==null,death=dying?clamp((engine.battleTime-engine.deadAt)/1900):0,attacking=engine.attackAt!==null&&!dying;
+      c.save();if(dying){c.globalAlpha=1-clamp(death*1.7);c.translate(mx,ground);c.rotate(death*.8);c.scale(1-death*.5,1-death*.5);c.translate(-mx,-ground);}
       const lift=move==='uppercut'&&p>.4?Math.sin(clamp((p-.4)/.5)*Math.PI)*bh*.25:0;
       const wobble=!move&&!this.reduced?Math.sin(now/1000+kind)*w*.012:0;
       ellipse(c,mx+wobble,ground,bh*.21,bh*.033,'#12264e44');
       if(kind&&cache.get('kaiju-atlas.webp'))drawKaiju(c,cache.get('kaiju-atlas.webp'),kind,mx+wobble,ground-lift,bh*.76,impact,now,arrival,attacking,this.reduced);
       else this.monster(cache.get('monster.webp'),mx+wobble,ground-lift,bh*.70,impact,now);
+      c.restore();
+      if(dying){
+        this.burst(mx,ground-bh*.4,bh*.9,'#ffe7a3',clamp(death*1.4));
+        this.ring(mx,ground-bh*.4,bh*(.2+death),'#b5faff',1-death);
+        for(let i=0;i<18;i++){const angle=i*Math.PI*2/18,dist=bh*(.1+death*.9);star(c,mx+Math.cos(angle)*dist,ground-bh*.4+Math.sin(angle)*dist-death*bh*.25,(1-death)*10,i%2?'#fff0a1':'#94edff',angle+death*3);}
+      }
       if(arrival<1)this.ring(mx,ground-bh*.37,bh*.48,MONSTERS[kind].color,1-arrival);
       if(attacking){
-        this.monsterCue=`${kind}:${Math.floor((now/1000+kind*1.7)/9)}`;
-        const shot=clamp((cycle-6.3)/1.9),xx=mx-(mx-baseX-bh*.24)*shot,yy=ground-bh*.43-Math.sin(shot*Math.PI)*bh*.15;
+        this.monsterCue=`${kind}:${engine.attackSerial}`;
+        const shot=clamp((engine.battleTime-engine.attackAt)/1900),xx=mx-(mx-baseX-bh*.24)*shot,yy=ground-bh*.43-Math.sin(shot*Math.PI)*bh*.15;
         this.aura(xx,yy,bh*.13,MONSTERS[kind].color,.8);
         if(kind===3){c.save();c.strokeStyle='#fff1a2';c.lineWidth=3;c.beginPath();for(let i=0;i<7;i++){const x=xx+i*5-15,y=yy+Math.sin(i*2+now/80)*10;i?c.lineTo(x,y):c.moveTo(x,y);}c.stroke();c.restore();}
         else this.ring(xx,yy,bh*.075,MONSTERS[kind].color,.85,now/300);
@@ -157,7 +164,14 @@ export class StageRenderer {
       }
       if(impact>.12){star(c,mx-bh*.13,ground-bh*.84,7,'#ffe49e',now/700);star(c,mx+bh*.14,ground-bh*.79,5,'#fff9d2',now/600);}
     }
-    const active=move&&p>.15&&p<.88;
+    const enemyShot=engine.attackAt===null?0:(engine.battleTime-engine.attackAt)/1900;
+    if(enemyShot>.72){
+      const block=Math.sin(clamp((enemyShot-.72)/.28)*Math.PI);
+      this.ring(x+bh*.25,feet-bh*.45,bh*.48,'#abfaff',block);
+      this.aura(x+bh*.24,feet-bh*.45,bh*.48,'#88ddff',block*.55);
+      if(!move){col=2;x-=Math.sin(block)*bh*.045;}
+    }
+    const active=(move&&p>.15&&p<.88)||enemyShot>.72;
     if(attack&&active&&!this.reduced){for(let i=5;i>0;i--){if(col>=0&&combat)this.combat(combat,engine.hero,col,x-i*bh*.08,feet+i*3,bh,.045*(6-i));else this.sprite(atlas,hero,pose,x-i*bh*.08,feet+i*3,bh,.045*(6-i));}}
     let rect;
     if(col>=0&&combat&&active){this.combat(combat,engine.hero,col,x,feet,bh);rect={x:x-bh*.5,y:feet-bh,w:bh,h:bh};}

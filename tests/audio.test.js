@@ -47,3 +47,12 @@ test('every move has distinct release sound scheduling without system speech',()
  for(const move of ['entrance','punch','fight','uppercut','spin','shield','special','ultimate']){events=[];a.move(move,'tiga','release');assert.ok(events.some(x=>x[0]==='voice'));assert.ok(events.some(x=>x[0]==='note'||x[0]==='noise'));signatures.push(JSON.stringify(events));}
  assert.ok(new Set(signatures).size>=7);
 });
+
+test('repeated use of the same move alternates actual buffer playback duration, rate and rhythm',async()=>{
+ const a=new GameAudio(),events=[];a.running=true;a.fx={};
+ const param={setValueAtTime(){},linearRampToValueAtTime(){}};
+ a.ctx={currentTime:0,createGain:()=>({gain:param,connect(){return this;}}),createBufferSource:()=>({playbackRate:{value:1},connect(){return this;},start(...args){events.push([...args,this.playbackRate.value]);},stop(){}})};
+ a.voiceBuffers.set('tiga',{duration:1.73});const signatures=[];
+ for(let i=0;i<3;i++){events.length=0;await a.voice('tiga',false,'punch');signatures.push(JSON.stringify(events));}
+ assert.equal(new Set(signatures).size,3);
+});
