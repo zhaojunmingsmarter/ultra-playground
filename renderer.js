@@ -126,7 +126,7 @@ export class StageRenderer {
     if(attack){x+=w*.29*dash;pose=1;
       if(move==='punch'){col=0;x+=Math.sin(q*60)*bh*.025*dash;}
       if(move==='fight')feet-=Math.sin(clamp((q-.12)/.8)*Math.PI)*bh*.28;
-      if(move==='uppercut'){col=1;feet-=Math.sin(clamp((q-.20)/.62)*Math.PI)*bh*.48;}
+      if(move==='uppercut'){col=1;feet-=Math.sin(clamp((q-.20)/.62)*Math.PI)*bh*.22;}
       if(move==='spin'){col=3;feet-=Math.sin(clamp((q-.12)/.8)*Math.PI)*bh*.23;}
     }
     if(move==='shield')col=2;
