@@ -1,7 +1,7 @@
-export const DURATION = { entrance:2600, fight:2400, special:3600 };
+export const DURATION = { entrance:2600, fight:2400, special:3600, punch:2100, uppercut:2300, spin:2500, shield:2200, ultimate:4400 };
 // One action at a time. There is deliberately no queue for a child's repeated taps.
 export class GameEngine {
-  constructor(){this.hero=0;this.action=null;this.started=0;this.follow=false;this.waiting=null;this.monster=false;this.active=false;this.lastRequest=-Infinity;}
+  constructor(){this.hero=0;this.action=null;this.started=0;this.follow=false;this.waiting=null;this.monster=true;this.scene=0;this.active=false;this.lastRequest=-Infinity;}
   select(index){this.hero=index;this.cancel();}
   cancel(){this.action=null;this.waiting=null;this.started=0;this.lastRequest=-Infinity;}
   request(move, now){

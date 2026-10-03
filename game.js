@@ -55,8 +55,8 @@ function selectHero(index) {
   document.querySelectorAll('.hero').forEach((button, i) => button.setAttribute('aria-pressed', String(index === i)));
   $('#hero-name').textContent = hero.name;
   $('#hero-subtitle').textContent = hero.subtitle;
-  $('#fight-label').textContent = hero.fightName;
-  $('#special-label').textContent = hero.specialLabel;
+  $('#fight-label').textContent = '飞踢';
+  $('#special-label').textContent = '光线';
   $('#stage').setAttribute('aria-label', `${hero.name}在光之舞台上准备出招`);
   $('#stage').dataset.hero = hero.id;
   message(`${hero.name}，和你一起玩！`);
@@ -79,7 +79,7 @@ HEROES.forEach((hero,index) => {
 function beginAction() {
   lastPhase = ''; lastCount = 0;
   const hero = HEROES[engine.hero];
-  const text = engine.action === 'special' ? hero.power : engine.action === 'fight' ? hero.fightName : `${hero.name}，登场！`;
+  const text = engine.action === 'special' ? hero.power : ({fight:'飞踢',punch:'连环拳',uppercut:'升龙拳',spin:'旋风踢',shield:'光之盾',ultimate:'超级必杀'})[engine.action] || `${hero.name}，登场！`;
   message(text);
   $('#stage').setAttribute('aria-label', `${hero.name}正在展示${text}`);
   $('#stage').dataset.action = engine.action;
@@ -104,11 +104,17 @@ $('#monster').addEventListener('click', () => {
   if (!engine.active) return;
   engine.monster = !engine.monster;
   $('#monster').setAttribute('aria-pressed', String(engine.monster));
-  $('#monster strong').textContent = engine.monster ? '再见怪兽' : '叫怪兽';
+  $('#monster strong').textContent = '怪兽';
   audio.effect('monster');
   message(engine.monster ? '小怪兽，一起来练招！' : '小怪兽，下次见！');
 });
 
+document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{
+  engine.scene=Number(button.dataset.scene);
+  document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+  audio.effect('tap');
+}));
+let lastImpactKey='';
 function draw(now) {
   const state = engine.tick(now);
   if (state.justStarted) beginAction();
@@ -127,7 +133,8 @@ function draw(now) {
     if (state.phase === 'prepare') { $('#phase').textContent = '准备！'; audio.effect('charge'); }
     if (state.phase === 'release') {
       $('#phase').textContent = '出招！';
-      audio.effect(engine.action === 'special' ? 'beam' : engine.action === 'fight' ? 'hit' : 'hello');
+      if(engine.action === 'special' || engine.action === 'ultimate') audio.effect('beam');
+      else if(engine.action === 'entrance' || engine.action === 'shield') audio.effect('hello');
     }
     if (state.phase === 'recover') $('#phase').textContent = '好帅的招式！';
   }
@@ -140,6 +147,8 @@ function draw(now) {
   $('#move-progress').style.width = `${state.progress * 100}%`;
   $('#stage').dataset.phase = state.phase;
   renderer.draw(now, engine, state, cache);
+  const impactKey=`${engine.started}:${renderer.hitIndex}`;
+  if(renderer.hitIndex>=0 && impactKey!==lastImpactKey){lastImpactKey=impactKey;audio.effect('hit');}
   if (engine.active) frame = requestAnimationFrame(draw);
 }
 async function startGame() {

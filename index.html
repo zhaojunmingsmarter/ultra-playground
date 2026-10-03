@@ -22,12 +22,22 @@
     <p id="speech" class="speech" role="status" aria-live="polite" hidden></p>
     <div id="countdown" class="countdown" hidden></div>
     <div class="hero-title"><span id="hero-subtitle" hidden></span><strong id="hero-name">迪迦</strong><span id="phase" hidden></span></div>
-    <button id="monster" class="monster-button" aria-pressed="false"><span class="monster-icon">🦖</span><strong>叫怪兽</strong></button>
+    <button id="monster" class="monster-button" aria-pressed="true"><span class="monster-icon">🦖</span><strong>怪兽</strong></button>
+    <div class="scenes" aria-label="选择场景"><button data-scene="0" aria-label="城市" aria-pressed="true">🏙</button><button data-scene="1" aria-label="宇宙" aria-pressed="false">🪐</button><button data-scene="2" aria-label="峡谷" aria-pressed="false">🏜</button></div>
     <div id="move-progress" class="move-progress"></div>
   </section>
   <section class="controls" aria-label="选择奥特曼和招式">
     <div class="hero-selection"><div id="heroes" class="heroes"></div></div>
-    <div class="move-selection"><div class="moves"><button data-move="entrance" class="move entrance"><span>✦</span><strong>变身登场</strong></button><button data-move="fight" class="move fight"><span>✊</span><strong id="fight-label">飞踢</strong></button><button data-move="special" class="move special"><span>ϟ</span><strong id="special-label">发射光线</strong></button></div></div>
+    <div class="move-selection"><div class="moves">
+<button data-move="entrance" class="move entrance"><span>✦</span><strong>变身</strong></button>
+<button data-move="punch" class="move fight"><span>✊</span><strong>连环拳</strong></button>
+<button data-move="fight" class="move fight"><span>🦶</span><strong id="fight-label">飞踢</strong></button>
+<button data-move="uppercut" class="move fight"><span>☄</span><strong>升龙拳</strong></button>
+<button data-move="spin" class="move entrance"><span>🌀</span><strong>旋风踢</strong></button>
+<button data-move="shield" class="move special"><span>🛡</span><strong>光之盾</strong></button>
+<button data-move="special" class="move special"><span>ϟ</span><strong id="special-label">光线</strong></button>
+<button data-move="ultimate" class="move ultimate"><span>🌟</span><strong>超级必杀</strong></button>
+</div></div>
   </section>
   <footer hidden><span>每一次，都是小英雄</span><span id="follow-hint" hidden>🙌 跟我做已开启</span><span class="sound-note">♫ <span id="music-status">音乐开</span></span></footer>
 </main>
