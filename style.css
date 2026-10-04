@@ -35,9 +35,8 @@ html,body{touch-action:pan-x pan-y;overscroll-behavior:none;-webkit-text-size-ad
 /* Separate the character shelf from the action pad using shape and color. */
 .hero-selection,.move-selection{padding:10px 12px 13px;border-radius:23px;border:2px solid #80b7d6;background:#d8edfa;box-shadow:0 4px 0 #b0ccdf}
 .move-selection{background:#fff0d5;border-color:#e6bd73;box-shadow:0 4px 0 #e3ccaa}
-.controls h2{font-size:15px;margin:0 0 8px;color:#246487;letter-spacing:2px}.move-selection h2{color:#9a651b}
-.controls{gap:20px;margin-top:13px}.arena{height:calc(100dvh - 274px)}
+.controls{gap:20px;margin-top:13px}.arena{height:calc(100dvh - 248px)}
 .monster-health{position:absolute;right:17px;top:111px;width:92px;height:17px;padding:3px;display:flex;gap:3px;border-radius:9px;background:#10233bdd;border:1px solid #fff8}
 .monster-health i{flex:1;border-radius:4px;background:linear-gradient(#c9ff92,#65d35d);transition:background .2s,opacity .2s}.monster-health i.empty{background:#3d4556;opacity:.55}.monster-health[data-hp="1"] i:not(.empty){background:#ffb05c}
-@media(orientation:portrait){.arena{height:calc(100dvh - 437px)}.controls{gap:14px}.hero-selection,.move-selection{padding:9px 10px 12px}}
+@media(orientation:portrait){.arena{height:calc(100dvh - 385px)}.controls{gap:14px}.hero-selection,.move-selection{padding:9px 10px 12px}}
 @media(orientation:portrait){.speech{top:145px}}
